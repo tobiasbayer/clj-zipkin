@@ -1,10 +1,10 @@
-(defproject clj-zipkin "0.1.3"
+(defproject org.clojars.lianga/clj-zipkin "0.1.4"
   :description "Zipkin tracing instrumentation for Clojure applications."
   :url "https://github.com/guilespi/clj-zipkin"
   :license {:name "Eclipse Public License"
             :url "http://www.eclipse.org/legal/epl-v10.html"}
   :dependencies [[org.clojure/clojure "1.5.1"]
-                 [thrift-clj "0.1.1"]
+                 [thrift-clj "0.2.1"]
                  [ch.qos.logback/logback-classic "1.0.13"]
                  [org.clojure/data.codec "0.1.0"]
                  [clj-scribe "0.3.1"]
@@ -16,4 +16,5 @@
                                   [ring "1.2.1"]]}}
   :plugins [[lein-thriftc "0.1.0"]]
   :prep-tasks ["thriftc"]
+  :thriftc {:javac-opts ["-source" "1.6" "-target" "1.6"]}
   :javac-options ["-Xlint:unchecked"])
