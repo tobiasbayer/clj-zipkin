@@ -6,7 +6,9 @@ Zipkin tracing instrumentation for Clojure applications.
 
 Add the following dependency to your `project.clj` file:
 
-       [clj-zipkin "0.1.3"]
+       [org.clojars.aliceliang/clj-zipkin "0.1.4"]
+
+This has been compiled with java 6.
 
 ### Tracing
 
@@ -152,6 +154,32 @@ A ring handler is available for automated tracing of incoming requests
        (-> routes
        (m/request-tracer {:scribe {:host "localhost" :port 9410}
                           :service "WebServer"})))
+
+```
+
+We also have another middleware that takes advantage of the start/stop span functions.  We can also write a wrap-annotations function that will add annotations to the span.
+
+```clojure
+
+   (require '[clj-zipkin.middleware :as m])
+  
+   (defroutes routes
+     (GET "/" [] "<h1>Hello World</h1>")
+     (route/not-found "<h1>Page not found</h1>"))
+
+   (defn wrap-annotations
+     "We add some more annotations here."
+     [handler]
+     (fn [{:keys [uri query-string] :as request}]
+       (tls/add-annotation {:path uri})
+       (when query-string (tls/add-annotation {:query query-string)})
+       (handler request)))
+
+   (def app
+       (-> routes
+       wrap-annotations
+       (m/wrap-trace (t/make-logger {:host "localhost" :port 9410}))))
+
    
 ```
 
