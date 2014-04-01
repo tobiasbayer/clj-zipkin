@@ -18,10 +18,10 @@
   [& body]
   `(thread-local* (fn [] ~@body)))
 
-(def ^{:doc "Span being traced on the current thread"} 
+(def ^{:doc "Span being traced on the current thread"}
   thread-local-span (thread-local (atom nil)))
 
-(defn start-span 
+(defn start-span
   "Starts a new span using the thread local storage
    as state.
 
@@ -35,7 +35,7 @@
                               :trace-id trace-id
                               :span-id (tracer/create-id)
                               :parent-id parent-id
-                              :annotations []
+                              :annotations {}
                               :start-time (time/now)})
   @@thread-local-span)
 
@@ -43,7 +43,7 @@
   "Adds annotation to the thread local span"
   [annotation]
   (when @@thread-local-span
-    (swap! @thread-local-span update-in [:annotations] conj annotation)))
+    (swap! @thread-local-span update-in [:annotations] merge annotation)))
 
 (defn get-span
   "Retrieves the current thread span from TLS."
@@ -56,16 +56,17 @@
   (reset! @thread-local-span nil))
 
 (defn close-span
-  "Finishes the current thread span and logs using scribe connection, 
+  "Finishes the current thread span and logs using scribe connection,
    clears current-span afterwards."
   [connection]
   (when-let [span @@thread-local-span]
-    (let [span-list [(tracer/create-timestamp-span (:operation span) 
+    (let [span-list [(tracer/create-timestamp-span (:operation span)
                                                    (:host span)
                                                    (:trace-id span)
-                                                   (:span-id span)  
+                                                   (:span-id span)
                                                    (:parent-id span)
-                                                   (:start-time span) 
-                                                   (time/now))]]
+                                                   (:start-time span)
+                                                   (time/now)
+                                                   (:annotations span))]]
       (tracer/log connection span-list)
       (clear-span))))
