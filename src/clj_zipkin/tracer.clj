@@ -64,7 +64,7 @@
 (defn create-timestamp-span
   "Creates a new span with start/finish annotations"
   ([span host trace-id span-id parent-id start finish]
-     (create-timestamp-span) span host trace-id span-id parent-id start finish {})
+   (create-timestamp-span span host trace-id span-id parent-id start finish {}))
   ([span host trace-id span-id parent-id start finish & [annotations]]
      (let [endpoint (host->endpoint host)
            start-timestamp (* 1000 (time-coerce/to-long start))
