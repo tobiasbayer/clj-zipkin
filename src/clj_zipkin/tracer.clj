@@ -1,10 +1,12 @@
 (ns clj-zipkin.tracer
   (:require [clojure.data.codec.base64 :as b64]
-            [clj-scribe :as scribe]
             [clj-time.core :as time]
             [clj-time.coerce :as time-coerce])
-  (:import (zipkin Span Annotation Endpoint Codec BinaryAnnotation)
-           (java.nio ByteBuffer)))
+  (:import [zipkin Span Annotation Endpoint Codec BinaryAnnotation]
+           [zipkin.reporter AsyncReporter]
+           [zipkin.reporter.kafka08 KafkaSender]
+           [zipkin.reporter.libthrift LibthriftSender]
+           [java.nio ByteBuffer]))
 
 ;(def bann (BinaryAnnotation. "name" (byte-streams/convert "abcd" java.nio.ByteBuffer) AnnotationType/STRING nil))
 
@@ -65,16 +67,16 @@
                                [(BinaryAnnotation/create "lc" *default-component-name* endpoint)]
                                (for [[k v] annotations]
                                  (BinaryAnnotation/create (name k) (name v) endpoint)))]
-     (thrift->base64
-      (.. (Span/builder)
-          (traceId (long trace-id))
-          (id span-id)
-          (parentId (long (if parent-id parent-id 0)))
-          (timestamp (long start-timestamp))
-          (duration (long (- end-timestamp start-timestamp)))
-          (name span)
-          (binaryAnnotations binary-annotations)
-          (build))))))
+     
+     (.. (Span/builder)
+           (traceId (long trace-id))
+           (id span-id)
+           (parentId (long (if parent-id parent-id 0)))
+           (timestamp (long start-timestamp))
+           (duration (long (- end-timestamp start-timestamp)))
+           (name span)
+           (binaryAnnotations binary-annotations)
+           (build)))))
 
 ;;tracing macro for nested recording
 
@@ -108,21 +110,21 @@
   item)
 
 (defn make-logger
-  "Creates a new scribe connection object, config should be a
-   map with scribe endpoint configuration:
+  "Creates a new kafka connection object, config should be a
+   map with kafka endpoint configuration:
 
    => {:host h :port p}"
-  ([config]
-     (make-logger config "zipkin"))
-  ([config category]
-     (scribe/async-logger :host (:host config)
-                          :port (:port config)
-                          :category category)))
+  [config]
+  (let [sender (.. KafkaSender (create config))]
+    (..
+     (AsyncReporter/builder sender)
+     (build))))
 
 (defn log
-  "Forward log to scribe"
-  [connection span-list]
-  (scribe/log connection span-list))
+  "Forward log to kafka"
+  [reporter span-list]
+  (mapv (fn [v]
+         (.report reporter v)) span-list))
 
 (defmacro trace*
   "Creates a start/finish timestamp annotations span
@@ -174,9 +176,9 @@
        (trace {:span \"OTHER\"}
          (..code...))))"
   [& args]
-  `(let [logger# ~(if (symbol? (-> args first :scribe))
-                    (-> args first :scribe)
-                   `(make-logger ~(-> args first :scribe)))
+  `(let [logger# ~(if (symbol? (-> args first :kafka))
+                    (-> args first :kafka)
+                   `(make-logger ~(-> args first :kafka)))
          ~'trace-id (or ~(-> args first :trace-id)
                         (create-id))
          ~'span-list (atom [])

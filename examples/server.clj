@@ -7,14 +7,14 @@
 
 (defonce server nil)
 
-(def config {:scribe {:host "localhost" :port 9410}
+(def config {:kafka "localhost:9092"
              :service "TestService"})
 
 (defn normal-fun
   []
   (t/trace {:span "GET"
             :host {:service "RendererService"}
-            :scribe (:scribe config)}
+            :kafka (:kafka config)}
            (do
                (Thread/sleep 100)
                "<h1>Hello World</h1>")))
@@ -31,7 +31,7 @@
             :parent-span-id (get-in request [:zipkin :span-id])
             ;specify only service name, default other parameters
             :host {:service "RendererService"}
-            :scribe (:scribe config)}
+            :kafka (:kafka config)}
            (do
              (Thread/sleep 100)
              "<h1>Hello World</h1>")))
