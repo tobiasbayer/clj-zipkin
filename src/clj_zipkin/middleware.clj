@@ -19,7 +19,7 @@
                 :host (or (:host config)
                           (when (:service config)
                             {:service (:service config)}))
-                :kafka (:kafka config)}
+                :config config}
                (handler (assoc request :zipkin {:trace-id tid
                                                 :span-id sid}))))))
 

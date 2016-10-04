@@ -110,18 +110,20 @@
   item)
 
 (defn make-logger
-  "Creates a new kafka connection object, config should be a
-   map with kafka endpoint configuration:
+  "Creates a new reporter connection object, config should be a
+   map with reporter endpoint configuration:
 
    => {:host h :port p}"
   [config]
-  (let [sender (.. KafkaSender (create config))]
+  (let [sender (case (:type config)
+                 :kafka (.. KafkaSender (create ((:type config) config)))
+                 :scribe (.. LibthriftSender (create (:host ((:type config) config)))))]
     (..
      (AsyncReporter/builder sender)
      (build))))
 
 (defn log
-  "Forward log to kafka"
+  "Forward log to reporter"
   [reporter span-list]
   (mapv (fn [v]
          (.report reporter v)) span-list))
@@ -176,9 +178,7 @@
        (trace {:span \"OTHER\"}
          (..code...))))"
   [& args]
-  `(let [logger# ~(if (symbol? (-> args first :kafka))
-                    (-> args first :kafka)
-                   `(make-logger ~(-> args first :kafka)))
+  `(let [logger# (make-logger ~(-> args first :config))
          ~'trace-id (or ~(-> args first :trace-id)
                         (create-id))
          ~'span-list (atom [])

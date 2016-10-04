@@ -7,17 +7,9 @@
 
 (defonce server nil)
 
-(def config {:kafka "localhost:9092"
+(def config {:type :kafka
+             :kafka "localhost:9092"
              :service "TestService"})
-
-(defn normal-fun
-  []
-  (t/trace {:span "GET"
-            :host {:service "RendererService"}
-            :kafka (:kafka config)}
-           (do
-               (Thread/sleep 100)
-               "<h1>Hello World</h1>")))
 
 (defn main-renderer
   [request]
@@ -31,7 +23,7 @@
             :parent-span-id (get-in request [:zipkin :span-id])
             ;specify only service name, default other parameters
             :host {:service "RendererService"}
-            :kafka (:kafka config)}
+            :config config}
            (do
              (Thread/sleep 100)
              "<h1>Hello World</h1>")))
