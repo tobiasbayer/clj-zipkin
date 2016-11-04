@@ -1,7 +1,6 @@
 (ns clj-zipkin.middleware
   (:require
-   [clj-zipkin.tracer :as t]
-   [clj-zipkin.tls :as tls]))
+   [clj-zipkin.tracer :as t]))
 
 (def ^:private TRACE-ID (.toLowerCase "X-B3-TraceId"))
 (def ^:private SPAN-ID (.toLowerCase "X-B3-SpanId"))
@@ -22,20 +21,3 @@
                 :config config}
                (handler (assoc request :zipkin {:trace-id tid
                                                 :span-id sid}))))))
-
-(defn wrap-trace
-  [handler logger]
-  (fn [{:keys [request-method uri] :as request}]
-    (let [tid (or (if-let [id (get-in request [:headers TRACE-ID])]
-                    (Integer/parseInt id))
-                  (t/create-id))
-          pid (if-let [id (get-in request [:headers PARENT-SPAN-ID])]
-                (Integer/parseInt id))
-          span (tls/start-span {:operation (name request-method)
-                                :host "10.2.1.1" ; TODO: get this from some environment variable
-                                :trace-id tid
-                                :parent-id pid})
-          resp (handler (assoc request :zipkin {:trace-id tid
-                                                :span-id (:span-id span)}))]
-      (tls/close-span logger)
-      resp)))
