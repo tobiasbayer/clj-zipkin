@@ -8,7 +8,7 @@
 
 (defn- to-long [v]
   (some-> v
-          read-string))
+          (Long/parseLong 16)))
 
 (defn request-tracer [handler config]
   (fn [request]
