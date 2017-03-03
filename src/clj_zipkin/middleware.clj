@@ -8,7 +8,7 @@
 
 (defn- to-long [v]
   (some-> v
-          (Long/parseLong 16)))
+          (Long/parseUnsignedLong 16)))
 
 (defn request-tracer [handler config]
   (fn [request]
