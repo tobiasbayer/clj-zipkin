@@ -1,4 +1,4 @@
-(defproject org.clojars.tobiasbayer/clj-zipkin "0.1.5"
+(defproject org.clojars.tobiasbayer/clj-zipkin "0.1.6-SNAPSHOT"
   :description "Zipkin tracing instrumentation for Clojure applications."
   :url "https://github.com/tobiasbayer/clj-zipkin"
   :license {:name "Eclipse Public License"
