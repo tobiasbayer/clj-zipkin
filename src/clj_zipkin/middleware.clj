@@ -6,11 +6,15 @@
 (def ^:private SPAN-ID (.toLowerCase "X-B3-SpanId"))
 (def ^:private PARENT-SPAN-ID (.toLowerCase "X-B3-ParentSpanId"))
 
+(defn- to-long [v]
+  (some-> v
+          read-string))
+
 (defn request-tracer [handler config]
   (fn [request]
-    (let [tid (or (get (:headers request) TRACE-ID) (t/create-id))
-          pid (get (:headers request) PARENT-SPAN-ID)
-          sid (or (get (:headers request) SPAN-ID) (t/create-id))]
+    (let [tid (or (to-long (get (:headers request) TRACE-ID)) (t/create-id))
+          pid (to-long (get (:headers request) PARENT-SPAN-ID))
+          sid (or (to-long (get (:headers request) SPAN-ID)) (t/create-id))]
       (t/trace {:trace-id tid
                 :span-id sid
                 :parent-span-id pid
