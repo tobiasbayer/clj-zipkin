@@ -117,7 +117,7 @@
   [config]
   (let [sender (case (:type config)
                  :kafka (.. KafkaSender (create ((:type config) config)))
-                 :scribe (.. LibthriftSender (create (:host ((:type config) config)))))]
+                 :scribe (.. LibthriftSender (builder) (host (:host ((:type config) config))) (port (:port ((:type config) config))) (build)))]
     (..
      (AsyncReporter/builder sender)
      (build))))
