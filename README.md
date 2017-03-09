@@ -6,7 +6,7 @@ Zipkin tracing instrumentation for Clojure applications.
 
 Add the following dependency to your `project.clj` file:
 
-       [org.clojars.tobiasbayer/clj-zipkin "0.1.7"]
+       [org.clojars.tobiasbayer/clj-zipkin "0.1.8"]
 
 ### Tracing
 
