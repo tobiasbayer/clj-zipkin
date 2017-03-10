@@ -13,6 +13,8 @@
 (def ^:dynamic *default-service-name* "unknown")
 (def ^:dynamic *default-component-name* "")
 
+(def logger (atom nil))
+
 (defn ip-str-to-int
   [str-ip]
   (let [nums (vec (map read-string (clojure.string/split str-ip #"\.")))]
@@ -115,12 +117,19 @@
 
    => {:host h :port p}"
   [config]
-  (let [sender (case (:type config)
-                 :kafka (.. KafkaSender (create ((:type config) config)))
-                 :scribe (.. LibthriftSender (builder) (host (:host ((:type config) config))) (port (:port ((:type config) config))) (build)))]
-    (..
-     (AsyncReporter/builder sender)
-     (build))))
+  (when-not @logger
+    (let [sender (case (:type config)
+                   :kafka (.. KafkaSender (create ((:type config) config)))
+                   :scribe (.. LibthriftSender
+                               (builder)
+                               (host (:host ((:type config) config)))
+                               (port (:port ((:type config) config)))
+                               (build)))]
+      (reset! logger
+              (..
+               (AsyncReporter/builder sender)
+               (build)))))
+  @logger)
 
 (defn log
   "Forward log to reporter"
